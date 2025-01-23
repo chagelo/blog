@@ -1,0 +1,38 @@
+name: Deploy mdbook to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # 触发部署的分支（通常是主分支）
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. 设置 Rust 环境
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      # 3. 安装 mdbook
+      - name: Install mdbook
+        run: cargo install mdbook
+
+      # 4. 构建 mdbook
+      - name: Build mdbook
+        run: mdbook build
+
+      # 5. 部署到 gh-pages 分支
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./book
+          publish_branch: gh-pages  # 指定部署到 gh-pages 分支
