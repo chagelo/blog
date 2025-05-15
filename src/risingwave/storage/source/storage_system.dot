@@ -1,0 +1,18 @@
+
+digraph G {
+  node [shape=box];
+  // newrank=true;
+  State_Table -> "Hummock_Storage\n(LSM Tree based)"
+  [label="Read/Write", fontsize=20];
+  "Hummock_Storage\n(LSM Tree based)" -> Memtable
+  [label="Write", fontsize=20];
+  "Hummock_Storage\n(LSM Tree based)" -> Version_Manager
+  [label="Read", fontsize=20];
+  Memtable -> Immutable_Memtable [label="Flush", fontsize=20]
+  Immutable_Memtable -> SSTable [label="Upload", fontsize=20]
+  Compactor_Node -> SSTable [label="Compact", fontsize=20]
+  Block_Cache -> SSTable [dir=both, label="Cache", fontsize=20]
+  SSTable -> "Object_Store\n(S3, MiniIO, etc)" 
+  [label="Store In", fontsize=20]
+
+}
