@@ -1,3 +1,6 @@
+[output.html]
+site-url = "/blog/"
+
 [book]
 authors = ["chagelo"]
 language = "en"
