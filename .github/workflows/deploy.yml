@@ -3,7 +3,7 @@ name: Deploy mdbook to GitHub Pages
 on:
   push:
     branches:
-      - main  # 触发部署的分支（通常是主分支）
+      - master  # 触发部署的分支（通常是主分支）
 
 jobs:
   deploy:
