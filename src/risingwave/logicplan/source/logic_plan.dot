@@ -1,0 +1,58 @@
+digraph{
+    node [shape=box;style=rounded;];
+    newrank=true;
+    rankdir=LR;  
+
+    handle_execute->gen_batch_query_plan;
+
+    gen_batch_query_plan -> "planner.plan";
+
+    "planner.plan" -> BoundStatement;
+
+    BoundStatement[shape=diamond];
+
+    BoundStatement -> plan_query[label="BoundStatement::Query"];
+    plan_query -> plan_set_expr;
+    
+    plan_set_expr -> BoundSetExpr;
+
+    BoundSetExpr[shape=diamond];
+
+    BoundSetExpr -> plan_select[label="BoundSetExpr::Select"];
+
+    BoundSetExpr -> plan_values[label="BoundSetExpr::Values"];
+
+    BoundSetExpr -> plan_query[label="BoundSetExpr::Query"];
+
+    BoundSetExpr -> plan_set_operation[label="BoundSetExpr::SetOperations"];
+
+    plan_select -> plan_relation;
+
+    BoundStatement -> plan_insert[label="BoundStatement::Insert"];
+    plan_insert -> plan_query;
+    plan_insert -> "LogicalProject::create";
+
+
+    BoundStatement -> plan_delete[label="BoundStatement::Delete"]; 
+    plan_delete -> plan_where;
+    plan_delete -> plan_base_table;
+
+
+    // 将 plan_where 和 plan_base_table 排在同一行
+    { rank = same; plan_where; plan_base_table; }
+
+    // 使用中转虚拟节点 anchor 帮助放 LogicalProject 节点“下移”
+    plan_base_table -> "" [style=invis];
+
+    "" -> "LogicalProject::with_out_col_idx";
+    "" -> "LogicalProject::create";{ rank = same; plan_where; plan_base_table; }
+
+    plan_delete -> "LogicalProject::with_out_col_idx";
+    plan_delete -> "LogicalProject::create";    
+
+    BoundStatement -> plan_update[label="BoundStatement::Update"];
+    plan_update -> plan_where;
+    plan_update -> plan_base_table;
+    plan_update -> "LogicalProject::create";
+
+}
