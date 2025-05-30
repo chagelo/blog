@@ -1,3 +1,3 @@
-# SummarY
+# Summary
 
 - [risingwave](./risingwave/index.md)
