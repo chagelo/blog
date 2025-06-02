@@ -1,0 +1,22 @@
+digraph {
+    node [shape=box; style=rounded];
+
+    newrank=true;
+    rankdir=LR;  
+
+    gen_batch_query_plan -> {
+        plan;
+        gen_batch_plan[label="gen_batch_plan";color=red];
+        query_mode;
+    };
+    
+    query_mode [shape=diamond];
+
+    query_mode -> "unreachable!()"[label="QueryMode::Auto"];
+    query_mode -> gen_batch_local_plan[label="QueryMode::Local";];
+    query_mode -> gen_batch_distributed_plan[label="QueryMode::Distributed";]; 
+
+    gen_batch_local_plan[color=red];
+    gen_batch_distributed_plan[color=red];
+
+}

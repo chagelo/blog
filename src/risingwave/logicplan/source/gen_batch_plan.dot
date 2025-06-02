@@ -1,0 +1,28 @@
+digraph G {
+    node [shape=box;style=rounded];
+    newrank=true;
+    rankdir=LR;  
+    gbl[label="gen_batch_plan"];
+    gbl->plan;
+
+    plan -> golpfb[label="PlanPhase::Logical"]
+    plan -> panic[label="Batch\nOptimizedLogicalForStream\nStream"];
+    
+    golpfb[label="gen_optimized_logical_plan_for_batch";color=red];
+    plan[label="plan";shape=diamond];
+
+    gbl -> istie;
+    gbl -> const_eval_exprs;
+    gbl -> tbwor;
+    
+    
+    tbwor[shape=record;label="{{Trait ToBatch | to_batch_with_order_required}}";color=red];
+    obr[shape=record;label="{{Trait ToBatch|optimize_by_rules}}";color=red];
+    rer[label="rewrite_exprs_recursive";];
+    
+    const_eval_exprs -> rer;
+    istie -> visit_expr_recursive;
+    istie -> rer;
+
+    tbwor -> obr;
+}
