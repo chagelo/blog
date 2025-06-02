@@ -3,7 +3,18 @@ digraph{
     newrank=true;
     rankdir=LR;  
 
-    handle_execute->gen_batch_query_plan;
+    handle_execute->Statement;
+
+    Statement[shape=diamond];
+
+    Statement -> closure[label="Statement::Query,\nInsert, Delete, Update"];  
+
+    closure -> gen_batch_query_plan;
+    closure -> execute;
+
+    execute[color=red];
+
+    Statement -> handle_create_mv_bound[label="Statement::CreateView"];
 
     gen_batch_query_plan -> "planner.plan";
 
@@ -42,10 +53,10 @@ digraph{
     { rank = same; plan_where; plan_base_table; }
 
     // 使用中转虚拟节点 anchor 帮助放 LogicalProject 节点“下移”
-    plan_base_table -> "" [style=invis];
+    plan_base_table -> "placeholder" [style=invis];
 
-    "" -> "LogicalProject::with_out_col_idx";
-    "" -> "LogicalProject::create";{ rank = same; plan_where; plan_base_table; }
+    "placeholder" -> "LogicalProject::with_out_col_idx";
+    "placeholder" -> "LogicalProject::create";{ rank = same; plan_where; plan_base_table; }
 
     plan_delete -> "LogicalProject::with_out_col_idx";
     plan_delete -> "LogicalProject::create";    

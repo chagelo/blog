@@ -52,7 +52,9 @@ gen_batch_query_plan 的作用是**将绑定后的 sql（BoundResult）转换为
 - **根据执行模式生成本地或分布式的执行计划，调用 gen_batch_local_plan 或者 gen_batch_distributed_plan**
 - 构造 BatchQueryPlanResult 返回，包含物理计划、执行模式、schema、语句类型、依赖表等信息
 
-### gen_batch_query
+### gen_batch_plan
+
+![](./source/gen_batch_plan.svg)
 
 是 PlanRoot 的方法，将逻辑计划（Logical Plan）优化并转换为本地（单节点）可执行的批处理物理计划（Batch Physical Plan）
 
@@ -69,10 +71,33 @@ gen_batch_query_plan 的作用是**将绑定后的 sql（BoundResult）转换为
     - 校验最终计划的分布为单节点（Distribution::Single）。
     - 校验计划中没有 BatchExchange 节点（即本地计划不允许分布式交换）。
 
-更新 Phase 为 Batch 之后返回 plan
+PlanPhase 的变换
 
+- `Logical` -> `OptimizedLogicalForBatch` -> `Batch`
+- `Logical` -> `OptimizedLogicalForStream` -> `Stream`
 
+### 几个 gen 函数
 
+一开始看到 gen_batch_plan 和 gen_batch_local_plan 以及 gen_batch_distributed_plan，分不清它们的区别。
+
+我自己的理解是，前者将逻辑计划转化为**初步的**物理计划，后两者则进一步去生成local的或者distributed的物理计划（对于 local 如果一定避免不了分布式，还会根节点插入 Exchange）。
+
+在实际的查询处理流程中，生成分布式批处理计划的入口是 gen_batch_distributed_plan，而不是 gen_batch_plan。
+但在 gen_batch_query_plan 这类入口函数中，**通常会先生成一个“通用的”批处理物理计划（不强制要求单节点）**，然后根据 query_mode 决定：
+- 如果是分布式执行，走 gen_batch_distributed_plan。
+- 如果是本地执行，走 gen_batch_local_plan，此时输入的 plan 可能是分布式的（比如聚合、Join 等分布式算子），需要强制收敛到单节点。
+
+gen_batch_local_plan 的输入要求是已经是 Batch 阶段的物理计划（即 PlanPhase::Batch），但并不要求输入计划一定是单节点分布。
+它的主要作用是：**无论输入的批处理物理计划是什么分布（单节点或分布式），都强制将其转换为本地（单节点）可执行的计划。**
+- 如果输入计划已经是 Distribution::Single，则只需做一些额外检查和可能的 Exchange 插入。
+- 如果输入计划是分布式（如 Distribution::HashShard），则会在根节点插入一个 BatchExchange，把所有数据收敛到单节点。
+
+gen_batch_local_plan
+
+根节点插入 Exchange（如有必要）
+to_local_with_order_required 并不一定保证分布为单节点（Distribution::Single），因此这里判断：**如果当前分布不是单节点，或者需要额外的 Exchange（如根节点是 SeqScan/Source/Insert 等），就在根节点插入一个 BatchExchange，强制收敛到单节点。**
+
+**gen_batch_local_plan最终会调用 LogicalOptimizer::gen_optimized_logical_plan_for_batch 这个函数，这个函数内部对逻辑计划应用一系列批处理场景下的优化规则（如谓词下推、投影下推、合并等），最后得到一个优化后的逻辑计划**  
 
 #### 疑惑
 

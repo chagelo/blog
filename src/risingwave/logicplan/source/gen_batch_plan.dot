@@ -14,15 +14,29 @@ digraph G {
     gbl -> istie;
     gbl -> const_eval_exprs;
     gbl -> tbwor;
+
+    lggolpfb[shape=record;label="{{LogicalOptimizer|gen_optimized_logical_plan_for_batch}}"];
+
+    golpfb ->  lggolpfb; 
     
-    
+    lggolpfb -> obr
+
     tbwor[shape=record;label="{{Trait ToBatch | to_batch_with_order_required}}";color=red];
-    obr[shape=record;label="{{Trait ToBatch|optimize_by_rules}}";color=red];
+    obr[shape=record;style="filled";label="optimize_by_rules";color=red];
+    tb[shape=record; label="{{Trait ToBatch|to_batch}}";color=red];
     rer[label="rewrite_exprs_recursive";];
     
     const_eval_exprs -> rer;
     istie -> visit_expr_recursive;
     istie -> rer;
 
-    tbwor -> obr;
+    gbl -> obr;
+
+    tbwor -> tb;
+
+    obr -> optimize_by_rules_inner;
+    optimize_by_rules_inner -> optimize;
+
+    optimize[color=red];
+
 }
