@@ -99,6 +99,4 @@ to_local_with_order_required 并不一定保证分布为单节点（Distribution
 
 **gen_batch_local_plan最终会调用 LogicalOptimizer::gen_optimized_logical_plan_for_batch 这个函数，这个函数内部对逻辑计划应用一系列批处理场景下的优化规则（如谓词下推、投影下推、合并等），最后得到一个优化后的逻辑计划**  
 
-#### 疑惑
 
-- 看到这里我的疑惑是，上面进行逻辑计划转物理计划的过程中，其中的 batch 体现在什么方面
